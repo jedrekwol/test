@@ -8,6 +8,10 @@ library(plotly)
 
 #setwd("C:/Users/Jedrek/Documents/GitHub/imiona/names/apka")
 
+db <- iris
+db_unique <- as.vector(unique(db$Species) )
+
+
 
 
 
@@ -20,7 +24,7 @@ ui <- fluidPage(shinyUI(fluidPage(
   # ),
   headerPanel("Popularnosc imion w Polsce"),
   tabsetPanel(
-    tabPanel("Tabelka", fluid = TRUE,
+    tabPanel("Table", fluid = TRUE,
              sidebarLayout(
                sidebarPanel(
                  sliderInput("year1", "Wybierz rok",
@@ -32,75 +36,68 @@ ui <- fluidPage(shinyUI(fluidPage(
                ) 
              )
     ),
-    tabPanel("Fajny wykres", fluid = TRUE,
+    tabPanel("Plot", fluid = TRUE,
              sidebarLayout(
                sidebarPanel(
                  multiInput(
                    inputId = "names", label = "Wybierz imie:",
-                   choices = imiona_unique$Name,
+                   choices = db_unique,
                    selected = "Jakub", width = "350px"
                  )
                ),
                mainPanel(
                  uiOutput("test"),
-                 plotlyOutput("plot")
+                 plotOutput("plot")
                )
              )
     )
   ),
-
+  
 )))
 
 server <- shinyServer(function(input, output) {
   
   output$table <- renderTable({
     
-    #to mozna zrobic jako funkcje
+    head(db, 10)
     
-    top10_m <- imiona %>%
-      filter(Year == input$year1, Sex == "M") %>%
-      select(Name, Count)# 
+    top10_s <- db %>%
+      select(Species, Sepal.Length) %>%
+      filter(Species == "setosa") %>%
+      arrange(desc(Sepal.Length))
+ 
+    top10_s <- top10_s[1:10,]
+    top10_s$Sepal.Length <- as.character(top10_s$Sepal.Length)
     
-    top10_m <- top10_m[1:10,]
-    top10_m$Count <- as.character(top10_m$Count)
-    top10_m
+    top10_v <- db %>%
+      select(Species, Sepal.Length) %>%
+      filter(Species == "virginica") %>%
+      arrange(desc(Sepal.Length))
     
-    top10_k <- imiona %>%
+    top10_v <- top10_s[1:10,]
+    top10_v$Sepal.Length <- as.character(top10_v$Sepal.Length)
+    
 
-      filter(Year == input$year1, Sex == "K") %>%
-      select(Name, Count)
-
-    top10_k <- top10_k[1:10,]
-    top10_k$Count <- as.character(top10_k$Count)
-
-    top10 <- cbind(1:10, top10_m, top10_k)
+     
+    top10 <- cbind(1:10, top10_v, top10_s)
     names(top10)[1] <- ""
-    top10
+     top10
+    
   })
   
   output$test <- renderUI({
     if (length(input$names) == 0) {h2(print("Wybierz przynajmniej jedno imie"))}
   })
   
-  output$plot <- renderPlotly ({
+  output$plot <- renderPlot ({
     
-    imionka <- input$names
     
-    imiona_lata <- imiona %>%
-      filter(Name %in% imionka) %>%
-      select(Year, Name, Count, Sex) %>%
-      group_by(Name, Sex) %>%
-      complete(Year = full_seq(2000:2019, 1)) 
     
-    imiona_lata[is.na(imiona_lata)] <- 0
-    
-    p <- ggplot(imiona_lata, aes  (x = Year, y = Count, group = Name)) +
-      geom_line(aes(color =Name), size = 0.5) +
+    ggplot(db[db$Species == input$names,], aes  (x = Sepal.Length, y = Sepal.Width, group = Species)) +
+      geom_point(aes(color =Species), size = 0.5) +
       theme_classic() +
-      ylim(0, max(imiona_lata$Count)) +
-      theme(legend.position="bottom") 
-    if (length(input$names) > 0) {ggplotly(p)}
-    
+      # ylim(0, max(imiona_lata$Count)) +
+      theme(legend.position="bottom")
     
   })
   
