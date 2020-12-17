@@ -8,15 +8,6 @@ library(plotly)
 
 #setwd("C:/Users/Jedrek/Documents/GitHub/imiona/names/apka")
 
-imiona <- readxl::read_excel("imiona2.xlsx")
-imiona_unique <- imiona %>%
-  select(Name, Count) %>%
-  group_by(Name) %>%
-  summarise(Count = sum(Count)) %>%
-  arrange(desc(Count))
-
-
-
 
 
 
